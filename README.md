@@ -17,7 +17,7 @@ Load a pretrained diffusion model and sample from it in your browser with [scrip
 
 ```
 conda env create -f environment.yml
-conda activate diffusion
+conda activate diffuser
 pip install -r requirements.txt
 pip install -e .
 ```
