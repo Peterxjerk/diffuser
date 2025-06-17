@@ -183,7 +183,8 @@ class Trainer(object):
         conditions = to_np(batch.conditions[0])[:,None]
 
         ## [ batch_size x horizon x observation_dim ]
-        normed_observations = trajectories[:, :, self.dataset.action_dim:]
+        ## normed_observations.shape = (50, 384, 4)
+        normed_observations = trajectories[:, :, self.dataset.action_dim:] # trajectories = [actions, observations]
         observations = self.dataset.normalizer.unnormalize(normed_observations, 'observations')
 
         # from diffusion.datasets.preprocessing import blocks_cumsum_quat

@@ -39,12 +39,15 @@ if args.conditional:
     env.set_target()
 
 ## set conditioning xy position to be the goal
-target = env._target
+target = env._target # (7, 9)
 cond = {
     diffusion.horizon - 1: np.array([*target, 0, 0]),
 }
+# print("########################")
+# print(cond)
 
 ## observations for rendering
+## observations: [x, y, dx, dy]
 rollout = [observation.copy()]
 
 total_reward = 0
@@ -56,7 +59,10 @@ for t in range(env.max_episode_steps):
     ## that we really only need to plan once
     if t == 0:
         cond[0] = observation
-
+        # cond: {max_step: diffusion.horizon - 1: np.array([*target, 0, 0]
+        #           0    : observation}
+        # print('$$$$$$$$$$$$$$$$$$$$$$$')
+        # print(cond)
         action, samples = policy(cond, batch_size=args.batch_size)
         actions = samples.actions[0]
         sequence = samples.observations[0]

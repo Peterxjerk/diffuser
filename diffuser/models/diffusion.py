@@ -21,7 +21,7 @@ class GaussianDiffusion(nn.Module):
         self.observation_dim = observation_dim
         self.action_dim = action_dim
         self.transition_dim = observation_dim + action_dim
-        self.model = model
+        self.model = model # Unet
 
         betas = cosine_beta_schedule(n_timesteps)
         alphas = 1. - betas
@@ -140,18 +140,21 @@ class GaussianDiffusion(nn.Module):
 
         batch_size = shape[0]
         x = torch.randn(shape, device=device)
+        # cond: {max_step: diffusion.horizon - 1: np.array([*target, 0, 0]
+        #           0    : observation}
         x = apply_conditioning(x, cond, self.action_dim)
+        # x is in reversed order:[384,383,382,...,0]
 
         if return_diffusion: diffusion = [x]
 
         progress = utils.Progress(self.n_timesteps) if verbose else utils.Silent()
+        # n_timestpes: 256
         for i in reversed(range(0, self.n_timesteps)):
             timesteps = torch.full((batch_size,), i, device=device, dtype=torch.long)
             x = self.p_sample(x, cond, timesteps)
             x = apply_conditioning(x, cond, self.action_dim)
 
             progress.update({'t': i})
-
             if return_diffusion: diffusion.append(x)
 
         progress.close()
@@ -167,15 +170,16 @@ class GaussianDiffusion(nn.Module):
             conditions : [ (time, state), ... ]
         '''
         device = self.betas.device
-        batch_size = len(cond[0])
+        batch_size = len(cond[0]) # 1
         horizon = horizon or self.horizon
-        shape = (batch_size, horizon, self.transition_dim)
+        shape = (batch_size, horizon, self.transition_dim) # (1, 384, 4+2)
 
         return self.p_sample_loop(shape, cond, *args, **kwargs)
 
     #------------------------------------------ training ------------------------------------------#
 
     def q_sample(self, x_start, t, noise=None):
+        # forward
         if noise is None:
             noise = torch.randn_like(x_start)
 
@@ -210,5 +214,8 @@ class GaussianDiffusion(nn.Module):
         return self.p_losses(x, cond, t)
 
     def forward(self, cond, *args, **kwargs):
+        # plan_maze2d
+        # policies.py
+        # sample = self.diffusion_model(conditions)
         return self.conditional_sample(cond=cond, *args, **kwargs)
 
